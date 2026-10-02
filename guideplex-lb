@@ -1,0 +1,93 @@
+upstream guideplex_backend {
+    hash $cookie_MoodleSession consistent;
+
+    server 127.0.0.1:8083 max_conns=200 max_fails=3 fail_timeout=10s;
+    server 127.0.0.1:8088 max_conns=200 max_fails=3 fail_timeout=10s;
+    server 127.0.0.1:8089 max_conns=200 max_fails=3 fail_timeout=10s;
+
+    keepalive 32;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name learningplex.gsfcuniversity.in;
+    ssl_certificate /etc/letsencrypt/live/learningplex.gsfcuniversity.in/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/learningplex.gsfcuniversity.in/privkey.pem; # managed by Certbot
+
+    client_max_body_size 100M;
+
+    proxy_connect_timeout 10s;
+    proxy_send_timeout 120s;
+    proxy_read_timeout 120s;
+
+    location = /customcleanurl/routetest {
+        rewrite ^ /local/customcleanurl/route.php break;
+
+        proxy_pass http://guideplex_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Port 443;
+
+        proxy_set_header X-CustomCleanURL-URI $request_uri;
+    }
+
+    location ~ ^/course/edit/[^/]+/?$ {
+        rewrite ^ /local/customcleanurl/route.php break;
+
+        proxy_pass http://guideplex_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Port 443;
+
+        proxy_set_header X-CustomCleanURL-URI $request_uri;
+    }
+
+    location ~ ^/course/[^/]+/?$ {
+        rewrite ^ /local/customcleanurl/route.php break;
+
+        proxy_pass http://guideplex_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Port 443;
+
+        proxy_set_header X-CustomCleanURL-URI $request_uri;
+    }
+
+    location / {
+        proxy_pass http://guideplex_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Port 443;
+    }
+
+}
